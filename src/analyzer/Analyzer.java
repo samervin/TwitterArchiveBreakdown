@@ -101,7 +101,7 @@ public class Analyzer {
 		}
 		
 		bubbleSort(keys, values);
-		for(int i = 0; i < keys.size(); i++) {
+		for(int i = keys.size()-1; i > keys.size()-21; i--) {
 			System.out.println(keys.get(i) + ": " + values.get(i));
 		}
 	}
