@@ -3,6 +3,9 @@ package analyzer;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -101,9 +104,28 @@ public class Analyzer {
 		}
 		
 		bubbleSort(keys, values);
-		for(int i = keys.size()-1; i > keys.size()-21; i--) {
-			System.out.println(keys.get(i) + ": " + values.get(i));
+		for(int i = keys.size()-2; i > keys.size()-21; i--) {
+			String url = "https://twitter.com/account/redirect_by_id?id=" + keys.get(i);
+			System.out.println(callURL(url) + ": " + values.get(i));
 		}
+	}
+	
+	public static String callURL(String myURL) {	
+		URL url;
+		String result = "null";
+		
+		try {
+			url = new URL(myURL);
+			URLConnection urlConn = url.openConnection();
+			urlConn.connect();
+			InputStream is = urlConn.getInputStream();
+			result = urlConn.getURL().toString();
+			is.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
 	}
 	
 	public static void bubbleSort(ArrayList<Long> keys, ArrayList<Integer> values) {
