@@ -86,7 +86,10 @@ public class Analyzer {
 		}
 		in.close();
 		System.out.println("numtweets: " + tweetids.size());
+		System.out.println("Top people whose tweets you replied to:");
 		printTop(replyuserids);
+		System.out.println("Top people whose tweets you retweeted:");
+		printTop(rtuserids);
 	}
 	
 	public static void printTop(ArrayList<Long> input) {
