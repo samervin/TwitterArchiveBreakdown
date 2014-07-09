@@ -86,31 +86,82 @@ public class Analyzer {
 		}
 		in.close();
 		System.out.println("numtweets: " + tweetids.size());
-		System.out.println("Top people whose tweets you replied to:");
-		printTop(replyuserids);
-		System.out.println("Top people whose tweets you retweeted:");
-		printTop(rtuserids);
+//		System.out.println("Top people whose tweets you replied to:");
+//		printTopUsers(replyuserids);
+//		System.out.println("Top people whose tweets you retweeted:");
+//		printTopUsers(rtuserids);
+		printTopTimestamps(timestamps);
 	}
 	
-	public static void printTop(ArrayList<Long> input) {
-		ArrayList<Long> keys = new ArrayList<Long>();
-		ArrayList<Integer> values = new ArrayList<Integer>();
+	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values) {
+		printKeyValues(keys, values, 20, false, false);
+	}
+	
+	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values, int num, boolean isUserIds, boolean skipTop) {
+		if(num > keys.size()) num = keys.size();
 		
-		for(Long l : input) {
-			if(!keys.contains(l)) {
-				keys.add(l);
-				values.add(1);
-			} else {
-				int index = keys.indexOf(l);
-				values.set(index, values.get(index) + 1);
-			}
+		int current = 1;
+		for(int i = keys.size()-1; i > keys.size()-1-num; i--) {
+			System.out.printf("%-6d", current);
+			System.out.println( keys.get(i) + ": " + values.get(i));
+			current++;
 		}
+	}
+	
+	public static void printTopUsers(ArrayList<Long> input) {
+		ArrayList<Long> keys = new ArrayList<Long>();
+		ArrayList<Integer> values = order(input, keys);
 		
-		bubbleSort(keys, values);
 		for(int i = keys.size()-2; i > keys.size()-21; i--) {
 			String url = "https://twitter.com/account/redirect_by_id?id=" + keys.get(i);
 			System.out.println(callURL(url) + ": " + values.get(i));
 		}
+	}
+	
+	public static void printTopTimestamps(ArrayList<String> input) {
+		ArrayList<String> years = new ArrayList<String>();
+		ArrayList<String> months = new ArrayList<String>();
+		ArrayList<String> days = new ArrayList<String>();
+		
+		for(String s : input) {
+			years.add(s.substring(0, 4));
+			months.add(s.substring(0, 7));
+			days.add(s.substring(0, 10));
+		}
+		
+		ArrayList<String> yearkeys = new ArrayList<String>();
+		ArrayList<String> monthkeys = new ArrayList<String>();
+		ArrayList<String> daykeys = new ArrayList<String>();
+		
+		ArrayList<Integer> yearvals = order(years, yearkeys);
+		ArrayList<Integer> monthvals = order(months, monthkeys);
+		ArrayList<Integer> dayvals = order(days, daykeys);
+		
+		System.out.println("---TOP YEARS---");
+		printKeyValues(yearkeys, yearvals);
+		System.out.println("---TOP MONTHS---");
+		printKeyValues(monthkeys, monthvals);
+		System.out.println("---TOP DAYS---");
+		printKeyValues(daykeys, dayvals);
+	}
+	
+	//Given an input and output array, sort the input by number of occurrences
+	//input is untouched, output is reset before computation, and its size == nums' size.
+	public static <T> ArrayList<Integer> order(ArrayList<T> input, ArrayList<T> output) {
+		ArrayList<Integer> nums = new ArrayList<Integer>();
+		
+		for(T t : input) {
+			if(!output.contains(t)) {
+				output.add(t);
+				nums.add(1);
+			} else {
+				int index = output.indexOf(t);
+				nums.set(index, nums.get(index) + 1);
+			}
+		}
+		
+		bubbleSort(output, nums);
+		return nums;
 	}
 	
 	public static String callURL(String myURL) {	
@@ -131,7 +182,7 @@ public class Analyzer {
 		return result;
 	}
 	
-	public static void bubbleSort(ArrayList<Long> keys, ArrayList<Integer> values) {
+	public static <T> void bubbleSort(ArrayList<T> keys, ArrayList<Integer> values) {
 
 		for (int k = 0; k < values.size() - 1; k++) {
 			boolean isSorted = true;
@@ -142,7 +193,7 @@ public class Analyzer {
 					values.set(i, values.get(i - 1));
 					values.set(i - 1, tempVariable);
 					
-					long tempVariable2 = keys.get(i);
+					T tempVariable2 = keys.get(i);
 					keys.set(i, keys.get(i - 1));
 					keys.set(i - 1, tempVariable2);
 					isSorted = false;
