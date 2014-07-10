@@ -46,6 +46,14 @@ public class Analyzer {
 		while(in.hasNextLine()) {
 			String[] s = in.nextLine().split("\",\""); //this WILL BREAK if you have "," in a tweet or URL or something
 			
+			//if the array is not 10 entries long, the tweet text has hard returns.
+			//this will attempt to chain them together -- if it ends up failing, it just won't use that line.
+			while(s.length < 10) {
+				String[] s2 = in.nextLine().split("\",\"");
+				s[s.length-1] += " " + s2[0]; //space helps with word recognition
+				s = concat(s, s2);
+			}
+			
 			long tweetid = Long.parseLong(s[0].substring(1, s[0].length())); //cut out the first quote
 			tweetids.add(tweetid);
 			
@@ -180,6 +188,14 @@ public class Analyzer {
 		}
 		
 		return result;
+	}
+	
+	//this method will actually leave out the first element of b
+	public static String[] concat(String[] a, String[] b) {
+		String[] c = new String[a.length + b.length-1];
+		System.arraycopy(a, 0, c, 0, a.length);
+		System.arraycopy(b, 1, c, a.length, b.length-1);
+		return c;
 	}
 	
 	public static <T> void bubbleSort(ArrayList<T> keys, ArrayList<Integer> values) {
