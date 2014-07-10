@@ -101,9 +101,11 @@ public class Analyzer {
 		System.out.println("Top people whose tweets you retweeted:");
 		//printTopUsers(rtuserids);
 		
-		printTopTimestamps(timestamps);
+		//printTopTimestamps(timestamps);
 		
-		printTopSources(sources);
+		//printTopSources(sources);
+		
+		printTopWords(tweets);
 	}
 	
 	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values) {
@@ -144,6 +146,23 @@ public class Analyzer {
 		ArrayList<Integer> sourcevals = order(sourcenames, sourcekeys);
 		System.out.println("---TOP SOURCES---");
 		printKeyValues(sourcekeys, sourcevals);
+	}
+	
+	public static void printTopWords(ArrayList<String> input) {
+		ArrayList<String> words = new ArrayList<String>();
+		
+		for(String s : input) {
+			Scanner ts = new Scanner(s);
+			while(ts.hasNext())
+				words.add(ts.next());
+			ts.close();
+		}
+		
+		ArrayList<String> wordkeys = new ArrayList<String>();
+		ArrayList<Integer> wordvals = order(words, wordkeys);
+		
+		System.out.println("---TOP WORDS---");
+		printKeyValues(wordkeys, wordvals, 100, false, false);
 	}
 	
 	public static void printTopTimestamps(ArrayList<String> input) {
