@@ -93,16 +93,21 @@ public class Analyzer {
 			expandedurls.add(expandedurl);
 		}
 		in.close();
-		System.out.println("numtweets: " + tweetids.size());
-//		System.out.println("Top people whose tweets you replied to:");
-//		printTopUsers(replyuserids);
-//		System.out.println("Top people whose tweets you retweeted:");
-//		printTopUsers(rtuserids);
+		System.out.println("Number of tweets: " + tweetids.size());
+		
+		System.out.println("Top people whose tweets you replied to:");
+		//printTopUsers(replyuserids);
+		
+		System.out.println("Top people whose tweets you retweeted:");
+		//printTopUsers(rtuserids);
+		
 		printTopTimestamps(timestamps);
+		
+		printTopSources(sources);
 	}
 	
 	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values) {
-		printKeyValues(keys, values, 20, false, false);
+		printKeyValues(keys, values, 10, false, false);
 	}
 	
 	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values, int num, boolean isUserIds, boolean skipTop) {
@@ -111,7 +116,7 @@ public class Analyzer {
 		int current = 1;
 		for(int i = keys.size()-1; i > keys.size()-1-num; i--) {
 			System.out.printf("%-6d", current);
-			System.out.println( keys.get(i) + ": " + values.get(i));
+			System.out.println(keys.get(i) + ": " + values.get(i));
 			current++;
 		}
 	}
@@ -120,10 +125,25 @@ public class Analyzer {
 		ArrayList<Long> keys = new ArrayList<Long>();
 		ArrayList<Integer> values = order(input, keys);
 		
-		for(int i = keys.size()-2; i > keys.size()-21; i--) {
+		for(int i = keys.size()-2; i > keys.size()-11; i--) {
 			String url = "https://twitter.com/account/redirect_by_id?id=" + keys.get(i);
 			System.out.println(callURL(url) + ": " + values.get(i));
 		}
+	}
+	
+	public static void printTopSources(ArrayList<String> input) {
+		//filter out the link business and just get the name
+		ArrayList<String> sourcenames = new ArrayList<String>();
+		
+		for(String s : input) {
+			//cut first "<" and get only the name, between tags
+			sourcenames.add(s.substring(s.indexOf(">")+1, s.indexOf("<", 2)));
+		}
+		
+		ArrayList<String> sourcekeys = new ArrayList<String>();
+		ArrayList<Integer> sourcevals = order(sourcenames, sourcekeys);
+		System.out.println("---TOP SOURCES---");
+		printKeyValues(sourcekeys, sourcevals);
 	}
 	
 	public static void printTopTimestamps(ArrayList<String> input) {
