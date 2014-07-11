@@ -3,11 +3,22 @@ package analyzer;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Scanner;
+
+/* Current todo:
+ * #Hashtag and @mention analysis
+ * Tie mentions / replies / retweets together to get total interaction
+ * More time analysis (time of day, consecutive days)
+ * URL analysis? Not sure how useful this is
+ * provide more robust arg options
+ * eventually: allow queries, so your top words / replies / interactions can be visible
+ */
 
 
 //presently there is a bug where tweets that have newline characters in them really fuck up the algorithm.
@@ -123,6 +134,21 @@ public class Analyzer {
 		}
 	}
 	
+	public static <T> void saveKeyValues(ArrayList<T> keys, ArrayList<Integer> values, int num, boolean isUserIds, boolean skipTop) throws IOException {
+		FileWriter fw = new FileWriter("output.txt", false);
+		if(num > keys.size()) num = keys.size();
+		
+		int current = 1;
+		for(int i = keys.size()-1; i > keys.size()-1-num; i--) {
+			String outline = String.format("%-10d", current);
+			outline += keys.get(i) + " -- " + values.get(i) + "\n";
+			current++;
+			
+			fw.write(outline);
+		}
+		fw.close();
+	}
+	
 	public static void printTopUsers(ArrayList<Long> input) {
 		ArrayList<Long> keys = new ArrayList<Long>();
 		ArrayList<Integer> values = order(input, keys);
@@ -153,16 +179,44 @@ public class Analyzer {
 		
 		for(String s : input) {
 			Scanner ts = new Scanner(s);
-			while(ts.hasNext())
-				words.add(ts.next());
+			while(ts.hasNext()) {
+				String word = ts.next().toLowerCase();
+				String result = "";
+				
+				for(int i = 0; i < word.length(); i++) {
+					char c = word.charAt(i);
+					if(Character.isLetterOrDigit(c))
+						result += c;
+				}
+				
+				if(result.length() < 1) {
+					words.add(word); //likely an emoticon or other symbol-only string
+				} else {
+					words.add(result);
+				}
+			}
 			ts.close();
 		}
 		
 		ArrayList<String> wordkeys = new ArrayList<String>();
 		ArrayList<Integer> wordvals = order(words, wordkeys);
 		
-		System.out.println("---TOP WORDS---");
-		printKeyValues(wordkeys, wordvals, 100, false, false);
+		//System.out.println("---TOP WORDS---");
+		//printKeyValues(wordkeys, wordvals, 100, false, false);
+		
+		printAlphabeticWords(wordkeys, wordvals);
+	}
+	
+	public static void printAlphabeticWords(ArrayList<String> input, ArrayList<Integer> keys) {
+		bubbleSortAlphabetic(input, keys);
+		
+		System.out.println("---ALPHABETIC WORDS---");
+		try {
+			saveKeyValues(input, keys, keys.size(), false, false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static void printTopTimestamps(ArrayList<String> input) {
@@ -249,6 +303,29 @@ public class Analyzer {
 					values.set(i - 1, tempVariable);
 					
 					T tempVariable2 = keys.get(i);
+					keys.set(i, keys.get(i - 1));
+					keys.set(i - 1, tempVariable2);
+					isSorted = false;
+				}
+			}
+
+			if (isSorted)
+				break;
+		}
+	}
+	
+	public static void bubbleSortAlphabetic(ArrayList<String> keys, ArrayList<Integer> values) {
+
+		for (int k = 0; k < values.size() - 1; k++) {
+			boolean isSorted = true;
+
+			for (int i = 1; i < keys.size() - k; i++) {
+				if (keys.get(i).compareTo(keys.get(i - 1)) > 0) {
+					int tempVariable = values.get(i);
+					values.set(i, values.get(i - 1));
+					values.set(i - 1, tempVariable);
+					
+					String tempVariable2 = keys.get(i);
 					keys.set(i, keys.get(i - 1));
 					keys.set(i - 1, tempVariable2);
 					isSorted = false;
