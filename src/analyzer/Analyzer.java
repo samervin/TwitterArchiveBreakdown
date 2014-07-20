@@ -116,7 +116,9 @@ public class Analyzer {
 		
 		//printTopSources(sources);
 		
-		printTopMentions(tweets);
+		//printTopMentions(tweets);
+		
+		printTopURLs(expandedurls);
 	}
 	
 	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values) {
@@ -284,6 +286,13 @@ public class Analyzer {
 		printKeyValues(monthkeys, monthvals);
 		System.out.println("---TOP DAYS---");
 		printKeyValues(daykeys, dayvals);
+	}
+	
+	public static void printTopURLs(ArrayList<String> input) {
+		ArrayList<String> keys = new ArrayList<String>();
+		ArrayList<Integer> values = order(input, keys);
+		
+		printKeyValues(keys, values, 100, false, false);
 	}
 	
 	//Given an input and output array, sort the input by number of occurrences
