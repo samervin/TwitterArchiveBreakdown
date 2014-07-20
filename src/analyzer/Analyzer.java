@@ -55,10 +55,10 @@ public class Analyzer {
 		ArrayList<String> expandedurls = new ArrayList<String>();
 		
 		while(in.hasNextLine()) {
-			String[] s = in.nextLine().split("\",\""); //this WILL BREAK if you have "," in a tweet or URL or something
+			String[] s = in.nextLine().split("\",\""); //this will potentially mess things up if you have "," in a tweet or URL or something
 			
 			//if the array is not 10 entries long, the tweet text has hard returns.
-			//this will attempt to chain them together -- if it ends up failing, it just won't use that line.
+			//this will attempt to chain them together.
 			while(s.length < 10) {
 				String[] s2 = in.nextLine().split("\",\"");
 				s[s.length-1] += " " + s2[0]; //space helps with word recognition
@@ -106,17 +106,17 @@ public class Analyzer {
 		in.close();
 		System.out.println("Number of tweets: " + tweetids.size());
 		
-		System.out.println("Top people whose tweets you replied to:");
+		//System.out.println("Top people whose tweets you replied to:");
 		//printTopUsers(replyuserids);
 		
-		System.out.println("Top people whose tweets you retweeted:");
+		//System.out.println("Top people whose tweets you retweeted:");
 		//printTopUsers(rtuserids);
 		
 		//printTopTimestamps(timestamps);
 		
 		//printTopSources(sources);
 		
-		printTopWords(tweets);
+		printTopMentions(tweets);
 	}
 	
 	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values) {
@@ -202,9 +202,49 @@ public class Analyzer {
 		ArrayList<Integer> wordvals = order(words, wordkeys);
 		
 		//System.out.println("---TOP WORDS---");
-		//printKeyValues(wordkeys, wordvals, 100, false, false);
+		printKeyValues(wordkeys, wordvals, 100, false, false);
 		
-		printAlphabeticWords(wordkeys, wordvals);
+		//printAlphabeticWords(wordkeys, wordvals);
+	}
+	
+	public static void printTopHashtags(ArrayList<String> input) {
+		ArrayList<String> hashtags = new ArrayList<String>();
+		
+		for(String s : input) {
+			Scanner ts = new Scanner(s);
+			while(ts.hasNext()) {
+				String word = ts.next().toLowerCase();
+				if(word.charAt(0) == '#')
+					hashtags.add(word);
+			}
+			ts.close();
+		}
+		
+		ArrayList<String> hashkeys = new ArrayList<String>();
+		ArrayList<Integer> hashvals = order(hashtags, hashkeys);
+		
+		System.out.println("---TOP #HASHTAGS---");
+		printKeyValues(hashkeys, hashvals, 100, false, false);
+	}
+	
+	public static void printTopMentions(ArrayList<String> input) {
+		ArrayList<String> mentions = new ArrayList<String>();
+		
+		for(String s : input) {
+			Scanner ts = new Scanner(s);
+			while(ts.hasNext()) {
+				String word = ts.next();
+				if(word.charAt(0) == '@')
+					mentions.add(word);
+			}
+			ts.close();
+		}
+		
+		ArrayList<String> mentionkeys = new ArrayList<String>();
+		ArrayList<Integer> mentionvals = order(mentions, mentionkeys);
+		
+		System.out.println("---TOP @MENTIONS---");
+		printKeyValues(mentionkeys, mentionvals, 100, false, false);
 	}
 	
 	public static void printAlphabeticWords(ArrayList<String> input, ArrayList<Integer> keys) {
