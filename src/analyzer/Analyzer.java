@@ -20,16 +20,31 @@ import java.util.Scanner;
  * eventually: allow queries, so your top words / replies / interactions can be visible
  */
 
-
-//presently there is a bug where tweets that have newline characters in them really fuck up the algorithm.
-//I'll try and make a sanitizer but please just remove extra newlines for now
 public class Analyzer {
+	
+	ArrayList<Long> tweetids = new ArrayList<Long>();
+	ArrayList<Long> replystatusids = new ArrayList<Long>();
+	ArrayList<Long> replyuserids = new ArrayList<Long>();
+	ArrayList<String> timestamps = new ArrayList<String>();
+	ArrayList<String> sources = new ArrayList<String>();
+	ArrayList<String> tweets = new ArrayList<String>();
+	ArrayList<Long> rtstatusids = new ArrayList<Long>();
+	ArrayList<Long> rtuserids = new ArrayList<Long>();
+	ArrayList<String> rttimestamps = new ArrayList<String>();
+	ArrayList<String> expandedurls = new ArrayList<String>();
 
-	public static void main(String[] args) {
+	public void main(String[] args) {
 		String filename = "tweets.csv";
-		if(args.length > 0) {
-			filename = args[0];
+		
+		for(int i = 0; i < args.length; i++) {
+			if(args[i].equals("-file"))
+				filename = args[i+1];
 		}
+		
+		new Analyzer(filename);
+	}
+	
+	public Analyzer(String filename) {
 		
 		Scanner in = null;
 		try {
@@ -42,17 +57,7 @@ public class Analyzer {
 			e.printStackTrace();
 		}
 		
-		//longs are used when an integer just isn't big enough
-		ArrayList<Long> tweetids = new ArrayList<Long>();
-		ArrayList<Long> replystatusids = new ArrayList<Long>();
-		ArrayList<Long> replyuserids = new ArrayList<Long>();
-		ArrayList<String> timestamps = new ArrayList<String>();
-		ArrayList<String> sources = new ArrayList<String>();
-		ArrayList<String> tweets = new ArrayList<String>();
-		ArrayList<Long> rtstatusids = new ArrayList<Long>();
-		ArrayList<Long> rtuserids = new ArrayList<Long>();
-		ArrayList<String> rttimestamps = new ArrayList<String>();
-		ArrayList<String> expandedurls = new ArrayList<String>();
+		
 		
 		while(in.hasNextLine()) {
 			String[] s = in.nextLine().split("\",\""); //this will potentially mess things up if you have "," in a tweet or URL or something
@@ -80,10 +85,8 @@ public class Analyzer {
 				replyuserids.add((long) -1);
 			}
 			
-			timestamps.add(s[3]);
-			
-			sources.add(s[4]);
-			
+			timestamps.add(s[3]);			
+			sources.add(s[4]);			
 			tweets.add(s[5]);
 			
 			if(s[6].length() > 0) {
@@ -121,22 +124,34 @@ public class Analyzer {
 		printTopURLs(expandedurls);
 	}
 	
-	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values) {
+	public <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values) {
 		printKeyValues(keys, values, 10, false, false);
 	}
 	
-	public static <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values, int num, boolean isUserIds, boolean skipTop) {
-		if(num > keys.size()) num = keys.size();
+	public <T> void printKeyValues(ArrayList<T> keys, ArrayList<Integer> values, int num, boolean isUserIds, boolean skipTop) {
+		int skip = 0;
+		if(skipTop) skip = 1;
+		if(num > keys.size()) num = keys.size()-skip;
 		
-		int current = 1;
-		for(int i = keys.size()-1; i > keys.size()-1-num; i--) {
-			System.out.printf("%-6d", current);
-			System.out.println(keys.get(i) + ": " + values.get(i));
-			current++;
+		if(isUserIds) {
+			int current = 1;
+			for(int i = keys.size()-1-skip; i > keys.size()-1-skip-num; i--) {
+				System.out.printf("%-6d", current);
+				String url = "https://twitter.com/account/redirect_by_id?id=" + keys.get(i);
+				System.out.println(callURL(url) + ": " + values.get(i));
+				current++;
+			}
+		} else {
+			int current = 1;
+			for(int i = keys.size()-1-skip; i > keys.size()-1-skip-num; i--) {
+				System.out.printf("%-6d", current);
+				System.out.println(keys.get(i) + ": " + values.get(i));
+				current++;
+			}
 		}
 	}
 	
-	public static <T> void saveKeyValues(ArrayList<T> keys, ArrayList<Integer> values, int num, boolean isUserIds, boolean skipTop) throws IOException {
+	public <T> void saveKeyValues(ArrayList<T> keys, ArrayList<Integer> values, int num, boolean isUserIds, boolean skipTop) throws IOException {
 		FileWriter fw = new FileWriter("output.txt", false);
 		if(num > keys.size()) num = keys.size();
 		
@@ -151,17 +166,14 @@ public class Analyzer {
 		fw.close();
 	}
 	
-	public static void printTopUsers(ArrayList<Long> input) {
+	public void printTopUsers(ArrayList<Long> input) {
 		ArrayList<Long> keys = new ArrayList<Long>();
 		ArrayList<Integer> values = order(input, keys);
 		
-		for(int i = keys.size()-2; i > keys.size()-11; i--) {
-			String url = "https://twitter.com/account/redirect_by_id?id=" + keys.get(i);
-			System.out.println(callURL(url) + ": " + values.get(i));
-		}
+		printKeyValues(keys, values, 10, true, true);
 	}
 	
-	public static void printTopSources(ArrayList<String> input) {
+	public void printTopSources(ArrayList<String> input) {
 		//filter out the link business and just get the name
 		ArrayList<String> sourcenames = new ArrayList<String>();
 		
@@ -176,7 +188,7 @@ public class Analyzer {
 		printKeyValues(sourcekeys, sourcevals);
 	}
 	
-	public static void printTopWords(ArrayList<String> input) {
+	public void printTopWords(ArrayList<String> input) {
 		ArrayList<String> words = new ArrayList<String>();
 		
 		for(String s : input) {
@@ -209,7 +221,7 @@ public class Analyzer {
 		//printAlphabeticWords(wordkeys, wordvals);
 	}
 	
-	public static void printTopHashtags(ArrayList<String> input) {
+	public void printTopHashtags(ArrayList<String> input) {
 		ArrayList<String> hashtags = new ArrayList<String>();
 		
 		for(String s : input) {
@@ -229,7 +241,7 @@ public class Analyzer {
 		printKeyValues(hashkeys, hashvals, 100, false, false);
 	}
 	
-	public static void printTopMentions(ArrayList<String> input) {
+	public void printTopMentions(ArrayList<String> input) {
 		ArrayList<String> mentions = new ArrayList<String>();
 		
 		for(String s : input) {
@@ -249,7 +261,7 @@ public class Analyzer {
 		printKeyValues(mentionkeys, mentionvals, 100, false, false);
 	}
 	
-	public static void printAlphabeticWords(ArrayList<String> input, ArrayList<Integer> keys) {
+	public void printAlphabeticWords(ArrayList<String> input, ArrayList<Integer> keys) {
 		bubbleSortAlphabetic(input, keys);
 		
 		System.out.println("---ALPHABETIC WORDS---");
@@ -261,7 +273,7 @@ public class Analyzer {
 		}
 	}
 	
-	public static void printTopTimestamps(ArrayList<String> input) {
+	public void printTopTimestamps(ArrayList<String> input) {
 		ArrayList<String> years = new ArrayList<String>();
 		ArrayList<String> months = new ArrayList<String>();
 		ArrayList<String> days = new ArrayList<String>();
@@ -288,16 +300,16 @@ public class Analyzer {
 		printKeyValues(daykeys, dayvals);
 	}
 	
-	public static void printTopURLs(ArrayList<String> input) {
+	public void printTopURLs(ArrayList<String> input) {		
 		ArrayList<String> keys = new ArrayList<String>();
 		ArrayList<Integer> values = order(input, keys);
 		
-		printKeyValues(keys, values, 100, false, false);
+		printKeyValues(keys, values, 100, false, true);
 	}
 	
 	//Given an input and output array, sort the input by number of occurrences
 	//input is untouched, output is reset before computation, and its size == nums' size.
-	public static <T> ArrayList<Integer> order(ArrayList<T> input, ArrayList<T> output) {
+	public <T> ArrayList<Integer> order(ArrayList<T> input, ArrayList<T> output) {
 		ArrayList<Integer> nums = new ArrayList<Integer>();
 		
 		for(T t : input) {
@@ -314,7 +326,7 @@ public class Analyzer {
 		return nums;
 	}
 	
-	public static String callURL(String myURL) {	
+	public String callURL(String myURL) {	
 		URL url;
 		String result = "null";
 		
@@ -333,14 +345,14 @@ public class Analyzer {
 	}
 	
 	//this method will actually leave out the first element of b
-	public static String[] concat(String[] a, String[] b) {
+	public String[] concat(String[] a, String[] b) {
 		String[] c = new String[a.length + b.length-1];
 		System.arraycopy(a, 0, c, 0, a.length);
 		System.arraycopy(b, 1, c, a.length, b.length-1);
 		return c;
 	}
 	
-	public static <T> void bubbleSort(ArrayList<T> keys, ArrayList<Integer> values) {
+	public <T> void bubbleSort(ArrayList<T> keys, ArrayList<Integer> values) {
 
 		for (int k = 0; k < values.size() - 1; k++) {
 			boolean isSorted = true;
@@ -363,7 +375,7 @@ public class Analyzer {
 		}
 	}
 	
-	public static void bubbleSortAlphabetic(ArrayList<String> keys, ArrayList<Integer> values) {
+	public void bubbleSortAlphabetic(ArrayList<String> keys, ArrayList<Integer> values) {
 
 		for (int k = 0; k < values.size() - 1; k++) {
 			boolean isSorted = true;
